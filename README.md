@@ -63,8 +63,8 @@ http://127.0.0.1:8000
 
 ## 🔑 Admin Panel Login
 - **URL:** Click ⚙ Admin in navbar
-- **Email:** thepallisudharshan@gmail.com
-- **Password:** Sudharshan@970
+- **Email:** 
+- **Password:** 
 
 ---
 
