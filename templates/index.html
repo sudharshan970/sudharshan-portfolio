@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thepalle Sudharshan Kumar | Data Scientist & ML Engineer</title>
+  <meta name="description" content="Portfolio of Thepalle Sudharshan Kumar — Data Scientist & Machine Learning Engineer based in Bangalore, India.">
+  <meta name="author" content="Thepalle Sudharshan Kumar">
+
+  <!-- Open Graph -->
+  <meta property="og:title"       content="Thepalle Sudharshan Kumar | Data Scientist">
+  <meta property="og:description" content="Data Scientist & ML Engineer — Fraud Detection, Generative AI, Python">
+  <meta property="og:type"        content="website">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets (load order matters) -->
+  <link rel="stylesheet" href="/static/src/css/variables.css">
+  <link rel="stylesheet" href="/static/src/css/reset.css">
+  <link rel="stylesheet" href="/static/src/css/components.css">
+  <link rel="stylesheet" href="/static/src/css/navbar.css">
+  <link rel="stylesheet" href="/static/src/css/hero.css">
+  <link rel="stylesheet" href="/static/src/css/sections.css">
+  <link rel="stylesheet" href="/static/src/css/admin.css">
+</head>
+<body>
+
+<!-- ============================================================
+     CURSOR & PARTICLES
+============================================================ -->
+<div id="cursor"></div>
+<div id="cursor-glow"></div>
+<canvas id="particles-canvas"></canvas>
+
+<!-- ============================================================
+     ADMIN OVERLAY
+============================================================ -->
+<div id="admin-overlay">
+
+  <!-- LOGIN -->
+  <div id="admin-login">
+    <div class="login-box">
+      <div class="login-logo">⚡ Admin Panel</div>
+      <div class="login-sub">PORTFOLIO MANAGEMENT SYSTEM</div>
+      <input type="text"     id="login-email"    class="login-input" placeholder="Email address" autocomplete="off">
+      <input type="password" id="login-password" class="login-input" placeholder="Password">
+      <button class="login-btn" onclick="doLogin()">Sign In →</button>
+      <div class="login-error" id="login-error">Invalid credentials.</div>
+      <div class="login-hint">
+        📧 thepallisudharshan@gmail.com<br>
+        🔒 Sudharshan@970<br>
+        <span style="color:rgba(0,212,255,0.5);">Change anytime → Admin → Settings</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="admin-dashboard">
+
+    <!-- SIDEBAR -->
+    <div class="admin-sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-text">⚡ Portfolio</div>
+        <div class="sidebar-logo-sub">ADMIN PANEL v2.0</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="sidebar-section-label">Overview</div>
+        <div class="sidebar-item active" data-panel="dashboard"    onclick="switchPanel('dashboard',this)">    <span class="sidebar-item-icon">🏠</span> Dashboard</div>
+        <div class="sidebar-section-label" style="margin-top:14px">Content</div>
+        <div class="sidebar-item" data-panel="hero"       onclick="switchPanel('hero',this)">       <span class="sidebar-item-icon">✨</span> Hero Section</div>
+        <div class="sidebar-item" data-panel="about"      onclick="switchPanel('about',this)">      <span class="sidebar-item-icon">👤</span> About Me</div>
+        <div class="sidebar-item" data-panel="skills"     onclick="switchPanel('skills',this)">     <span class="sidebar-item-icon">🧠</span> Skills</div>
+        <div class="sidebar-item" data-panel="projects"   onclick="switchPanel('projects',this)">   <span class="sidebar-item-icon">🚀</span> Projects</div>
+        <div class="sidebar-item" data-panel="experience" onclick="switchPanel('experience',this)"> <span class="sidebar-item-icon">💼</span> Experience</div>
+        <div class="sidebar-item" data-panel="education"  onclick="switchPanel('education',this)">  <span class="sidebar-item-icon">🎓</span> Education</div>
+        <div class="sidebar-item" data-panel="resume"     onclick="switchPanel('resume',this)">     <span class="sidebar-item-icon">📄</span> Resume</div>
+        <div class="sidebar-item" data-panel="profile"    onclick="switchPanel('profile',this)">    <span class="sidebar-item-icon">🖼️</span> Profile Photo</div>
+        <div class="sidebar-item" data-panel="contact-info" onclick="switchPanel('contact-info',this)"><span class="sidebar-item-icon">📬</span> Contact Info</div>
+        <div class="sidebar-section-label" style="margin-top:14px">Account</div>
+        <div class="sidebar-item" data-panel="settings" onclick="switchPanel('settings',this)"><span class="sidebar-item-icon">⚙️</span> Settings</div>
+      </div>
+      <div class="sidebar-footer">
+        <button class="sidebar-logout" onclick="adminLogout()">⎋ &nbsp;Sign Out</button>
+      </div>
+    </div><!-- /sidebar -->
+
+    <!-- MAIN CONTENT -->
+    <div class="admin-main">
+
+      <!-- DASHBOARD -->
+      <div class="admin-panel active" id="panel-dashboard">
+        <div class="admin-topbar">
+          <div>
+            <div class="admin-page-title">Dashboard</div>
+            <div class="admin-page-sub">Welcome back, Sudharshan 👋</div>
+          </div>
+        </div>
+        <div class="dash-cards" id="dash-cards"></div>
+        <div class="admin-section-card">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);margin-bottom:16px;">Quick Actions</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-add" onclick="switchPanel('projects',document.querySelector('[data-panel=projects]'));openProjectModal()">＋ Add Project</button>
+            <button class="btn-add" onclick="switchPanel('skills',document.querySelector('[data-panel=skills]'));openSkillModal()">＋ Add Skill</button>
+            <button class="btn-add" onclick="switchPanel('experience',document.querySelector('[data-panel=experience]'));openExpModal()">＋ Add Experience</button>
+            <button onclick="closeAdmin()" style="padding:10px 20px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-pill);cursor:pointer;font-family:var(--font-mono);font-size:.7rem;transition:all .3s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">← View Portfolio</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- HERO -->
+      <div class="admin-panel" id="panel-hero">
+        <div class="admin-topbar"><div><div class="admin-page-title">Hero Section</div><div class="admin-page-sub">Edit your main introduction</div></div></div>
+        <div class="admin-section-card">
+          <div class="admin-field"><label class="admin-label">Full Name</label><input class="admin-input" id="a-hero-name" placeholder="Thepalle Sudharshan Kumar"></div>
+          <div class="admin-field"><label class="admin-label">Greeting Line</label><input class="admin-input" id="a-hero-greeting" placeholder="Hello, It's Me"></div>
+          <div class="admin-field"><label class="admin-label">Badge Text</label><input class="admin-input" id="a-hero-badge" placeholder="Open to Roles | Immediate Joiner"></div>
+          <div class="admin-field"><label class="admin-label">Short Description</label><textarea class="admin-input" id="a-hero-desc" rows="4"></textarea></div>
+          <div class="admin-field"><label class="admin-label">Typing Titles (comma separated)</label><input class="admin-input" id="a-hero-titles" placeholder="Data Scientist,ML Engineer,Python Developer"></div>
+          <div class="admin-two-col">
+            <div class="admin-field"><label class="admin-label">LinkedIn URL</label><input class="admin-input" id="a-hero-linkedin"></div>
+            <div class="admin-field"><label class="admin-label">GitHub URL</label><input class="admin-input" id="a-hero-github"></div>
+          </div>
+          <button class="btn-save-section" onclick="saveHero()">💾 Save Hero Section</button>
+        </div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="admin-panel" id="panel-about">
+        <div class="admin-topbar"><div><div class="admin-page-title">About Me</div><div class="admin-page-sub">Edit your bio and stats</div></div></div>
+        <div class="admin-section-card">
+          <div class="admin-field"><label class="admin-label">About Text (use blank line between paragraphs)</label><textarea class="admin-input" id="a-about-text" rows="9"></textarea></div>
+          <div style="font-family:var(--font-mono);font-size:.7rem;color:var(--cyan);letter-spacing:.1em;margin:20px 0 10px;">STAT CARDS</div>
+          <div class="admin-two-col">
+            <div class="admin-field"><label class="admin-label">Stat 1 — Number</label><input class="admin-input" id="a-stat1-num" placeholder="3+"></div>
+            <div class="admin-field"><label class="admin-label">Stat 1 — Label</label><input class="admin-input" id="a-stat1-label" placeholder="Projects Built"></div>
+            <div class="admin-field"><label class="admin-label">Stat 2 — Number</label><input class="admin-input" id="a-stat2-num" placeholder="95%"></div>
+            <div class="admin-field"><label class="admin-label">Stat 2 — Label</label><input class="admin-input" id="a-stat2-label" placeholder="ML Accuracy"></div>
+            <div class="admin-field"><label class="admin-label">Stat 3 — Number</label><input class="admin-input" id="a-stat3-num" placeholder="BCA"></div>
+            <div class="admin-field"><label class="admin-label">Stat 3 — Label</label><input class="admin-input" id="a-stat3-label" placeholder="Degree"></div>
+            <div class="admin-field"><label class="admin-label">Stat 4 — Number</label><input class="admin-input" id="a-stat4-num" placeholder="2025"></div>
+            <div class="admin-field"><label class="admin-label">Stat 4 — Label</label><input class="admin-input" id="a-stat4-label" placeholder="Graduate"></div>
+          </div>
+          <button class="btn-save-section" onclick="saveAbout()">💾 Save About Section</button>
+        </div>
+      </div>
+
+      <!-- SKILLS -->
+      <div class="admin-panel" id="panel-skills">
+        <div class="admin-topbar">
+          <div><div class="admin-page-title">Skills</div><div class="admin-page-sub">Manage technical skills</div></div>
+          <button class="btn-add" onclick="openSkillModal()">＋ Add Skill</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="admin-table">
+            <thead><tr><th>Skill</th><th>Category</th><th>Level</th><th>Actions</th></tr></thead>
+            <tbody id="skills-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="admin-panel" id="panel-projects">
+        <div class="admin-topbar">
+          <div><div class="admin-page-title">Projects</div><div class="admin-page-sub">Manage portfolio projects</div></div>
+          <button class="btn-add" onclick="openProjectModal()">＋ Add Project</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="admin-table">
+            <thead><tr><th>Project</th><th>Technologies</th><th>Link</th><th>Actions</th></tr></thead>
+            <tbody id="projects-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EXPERIENCE -->
+      <div class="admin-panel" id="panel-experience">
+        <div class="admin-topbar">
+          <div><div class="admin-page-title">Experience</div><div class="admin-page-sub">Manage work history</div></div>
+          <button class="btn-add" onclick="openExpModal()">＋ Add Experience</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="admin-table">
+            <thead><tr><th>Role</th><th>Company</th><th>Duration</th><th>Actions</th></tr></thead>
+            <tbody id="exp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EDUCATION -->
+      <div class="admin-panel" id="panel-education">
+        <div class="admin-topbar">
+          <div><div class="admin-page-title">Education</div><div class="admin-page-sub">Manage education history</div></div>
+          <button class="btn-add" onclick="openEduModal()">＋ Add Education</button>
+        </div>
+        <div class="table-wrapper">
+          <table class="admin-table">
+            <thead><tr><th>Degree</th><th>Institution</th><th>Year</th><th>Actions</th></tr></thead>
+            <tbody id="edu-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RESUME -->
+      <div class="admin-panel" id="panel-resume">
+        <div class="admin-topbar"><div><div class="admin-page-title">Resume</div><div class="admin-page-sub">Upload or replace your PDF resume</div></div></div>
+        <div class="admin-section-card">
+          <div class="upload-zone" onclick="document.getElementById('resume-file-input').click()">
+            <div class="upload-zone-icon">📄</div>
+            <div class="upload-zone-text">Click to upload resume PDF<br><span>Max 5MB — PDF only</span></div>
+          </div>
+          <input type="file" id="resume-file-input" class="upload-hidden" accept=".pdf" onchange="handleResumeUpload(this)">
+          <div id="resume-upload-preview" class="upload-preview"></div>
+          <div style="margin-top:20px;">
+            <div style="font-family:var(--font-mono);font-size:.7rem;color:var(--muted);margin-bottom:10px;letter-spacing:.08em;">CURRENT RESUME</div>
+            <iframe id="admin-resume-iframe" style="width:100%;height:420px;border-radius:12px;border:1px solid var(--border);" title="Resume Preview"></iframe>
+          </div>
+          <button class="btn-save-section" onclick="saveResume()" style="margin-top:18px;">💾 Save Resume</button>
+        </div>
+      </div>
+
+      <!-- PROFILE PHOTO -->
+      <div class="admin-panel" id="panel-profile">
+        <div class="admin-topbar"><div><div class="admin-page-title">Profile Photo</div><div class="admin-page-sub">Update your profile picture</div></div></div>
+        <div class="admin-section-card" style="max-width:500px;">
+          <img id="profile-preview-admin" class="profile-preview-admin" src="/static/assets/profile.jpg" alt="Profile">
+          <div class="upload-zone" onclick="document.getElementById('profile-file-input').click()">
+            <div class="upload-zone-icon">🖼️</div>
+            <div class="upload-zone-text">Click to upload new photo<br><span>JPG, PNG, WebP — Max 4MB</span></div>
+          </div>
+          <input type="file" id="profile-file-input" class="upload-hidden" accept="image/*" onchange="handleProfileUpload(this)">
+          <div id="profile-upload-preview" class="upload-preview"></div>
+          <button class="btn-save-section" onclick="saveProfile()" style="margin-top:18px;">💾 Save Profile Photo</button>
+        </div>
+      </div>
+
+      <!-- CONTACT INFO -->
+      <div class="admin-panel" id="panel-contact-info">
+        <div class="admin-topbar"><div><div class="admin-page-title">Contact Info</div><div class="admin-page-sub">Update contact details</div></div></div>
+        <div class="admin-section-card">
+          <div class="admin-two-col">
+            <div class="admin-field"><label class="admin-label">Email</label><input class="admin-input" id="a-ci-email"></div>
+            <div class="admin-field"><label class="admin-label">Phone</label><input class="admin-input" id="a-ci-phone"></div>
+            <div class="admin-field"><label class="admin-label">Location</label><input class="admin-input" id="a-ci-location"></div>
+            <div class="admin-field"><label class="admin-label">LinkedIn URL</label><input class="admin-input" id="a-ci-linkedin"></div>
+            <div class="admin-field"><label class="admin-label">GitHub URL</label><input class="admin-input" id="a-ci-github"></div>
+            <div class="admin-field"><label class="admin-label">Section Heading</label><input class="admin-input" id="a-ci-heading"></div>
+          </div>
+          <div class="admin-field"><label class="admin-label">Description</label><textarea class="admin-input" id="a-ci-desc" rows="3"></textarea></div>
+          <button class="btn-save-section" onclick="saveContactInfo()">💾 Save Contact Info</button>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="admin-panel" id="panel-settings">
+        <div class="admin-topbar"><div><div class="admin-page-title">Settings</div><div class="admin-page-sub">Manage admin credentials &amp; email configuration</div></div></div>
+
+        <!-- Change Admin Email -->
+        <div class="admin-section-card" style="margin-bottom:22px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(0,212,255,.15),rgba(191,90,242,.15));border:1px solid rgba(0,212,255,.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📧</div>
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);">Change Admin Email</div>
+              <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--muted);margin-top:2px;">Update your login email address</div>
+            </div>
+          </div>
+          <div style="padding:12px 16px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:10px;margin-bottom:18px;">
+            <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.08em;">CURRENT ADMIN EMAIL</div>
+            <div style="font-family:var(--font-mono);font-size:.85rem;color:var(--cyan);margin-top:4px;" id="current-email-display">admin@portfolio.com</div>
+          </div>
+          <div class="admin-field"><label class="admin-label">New Email Address</label><input class="admin-input" id="s-new-email" type="email" placeholder="your@email.com" autocomplete="off"></div>
+          <div class="admin-field"><label class="admin-label">Confirm with Current Password</label><input class="admin-input" id="s-email-confirm-pass" type="password" placeholder="Enter current password"></div>
+          <button class="btn-save-section" onclick="saveAdminEmail()" style="background:linear-gradient(135deg,var(--cyan),var(--purple));">✉️ Update Email</button>
+        </div>
+
+        <!-- Change Admin Password -->
+        <div class="admin-section-card" style="margin-bottom:22px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(191,90,242,.15),rgba(255,45,120,.15));border:1px solid rgba(191,90,242,.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🔒</div>
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);">Change Admin Password</div>
+              <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--muted);margin-top:2px;">Update your login password</div>
+            </div>
+          </div>
+          <div class="admin-field"><label class="admin-label">Current Password</label><input class="admin-input" id="s-current-pass" type="password" placeholder="Enter current password"></div>
+          <div class="admin-field"><label class="admin-label">New Password</label>
+            <div style="position:relative;">
+              <input class="admin-input" id="s-new-pass" type="password" placeholder="Min 6 characters" style="padding-right:44px;">
+              <button onclick="togglePassVis('s-new-pass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem;padding:0;">👁</button>
+            </div>
+          </div>
+          <div class="admin-field"><label class="admin-label">Confirm New Password</label><input class="admin-input" id="s-confirm-pass" type="password" placeholder="Re-enter new password"></div>
+
+          <!-- Password strength bar -->
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-family:var(--font-mono);font-size:.65rem;color:var(--muted);letter-spacing:.08em;">PASSWORD STRENGTH</span>
+              <span style="font-family:var(--font-mono);font-size:.65rem;" id="pass-strength-label">—</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;">
+              <div id="pass-strength-bar" style="height:100%;width:0%;border-radius:2px;transition:all .3s;"></div>
+            </div>
+          </div>
+          <button class="btn-save-section" onclick="saveAdminPassword()" style="background:linear-gradient(135deg,var(--purple),var(--pink));">🔒 Update Password</button>
+        </div>
+
+        <!-- EmailJS Config -->
+        <div class="admin-section-card">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(57,255,20,.1),rgba(0,212,255,.1));border:1px solid rgba(57,255,20,.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📬</div>
+            <div>
+              <div style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);">EmailJS Configuration</div>
+              <div style="font-family:var(--font-mono);font-size:.65rem;color:var(--muted);margin-top:2px;">Contact form sends to your Gmail</div>
+            </div>
+            <div id="emailjs-status-badge" style="margin-left:auto;padding:4px 12px;border-radius:20px;font-family:var(--font-mono);font-size:.62rem;"></div>
+          </div>
+
+          <div style="padding:12px 16px;background:rgba(57,255,20,.04);border:1px solid rgba(57,255,20,.15);border-radius:10px;margin-bottom:18px;font-family:var(--font-mono);font-size:.72rem;line-height:1.8;color:var(--muted);">
+            💡 Get free keys at <a href="https://emailjs.com" target="_blank" style="color:var(--cyan);">emailjs.com</a> → Add Service (Gmail) → Create Template → Account → Public Key
+          </div>
+
+          <div class="admin-field"><label class="admin-label">Service ID</label><input class="admin-input" id="s-ejs-service" placeholder="service_xxxxxxx"></div>
+          <div class="admin-field"><label class="admin-label">Template ID</label><input class="admin-input" id="s-ejs-template" placeholder="template_xxxxxxx"></div>
+          <div class="admin-field"><label class="admin-label">Public Key</label><input class="admin-input" id="s-ejs-pubkey" placeholder="Your EmailJS public key"></div>
+          <div class="admin-field"><label class="admin-label">Recipient Email (where messages are sent)</label><input class="admin-input" id="s-ejs-recipient" type="email" placeholder="thepallisudharshan@gmail.com"></div>
+          <button class="btn-save-section" onclick="saveEmailJSConfig()" style="background:linear-gradient(135deg,#39ff14,#00d4ff);color:#000;">📬 Save EmailJS Config</button>
+        </div>
+
+      </div><!-- /panel-settings -->
+
+    </div><!-- /admin-main -->
+  </div><!-- /admin-dashboard -->
+</div><!-- /admin-overlay -->
+
+<!-- ============================================================
+     MODALS
+============================================================ -->
+<!-- SKILL MODAL -->
+<div class="modal-overlay" id="modal-skill">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-skill-title">Add Skill</div>
+    <button class="modal-close" onclick="closeModal('skill')">✕</button>
+    <input type="hidden" id="m-skill-id">
+    <div class="admin-field"><label class="admin-label">Skill Name</label><input class="admin-input" id="m-skill-name" placeholder="e.g. Python"></div>
+    <div class="admin-field">
+      <label class="admin-label">Category</label>
+      <select class="admin-input" id="m-skill-cat">
+        <option>Programming</option>
+        <option>Machine Learning</option>
+        <option>Visualization</option>
+        <option>Frameworks & Web</option>
+        <option>Databases</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="admin-field">
+      <label class="admin-label">Proficiency</label>
+      <div class="range-wrap">
+        <input type="range" class="admin-range" id="m-skill-level" min="10" max="100" value="80"
+               oninput="document.getElementById('m-skill-val').textContent=this.value+'%'">
+        <span class="range-val" id="m-skill-val">80%</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('skill')">Cancel</button>
+      <button class="btn-modal-save"   onclick="saveSkill()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT MODAL -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-project-title">Add Project</div>
+    <button class="modal-close" onclick="closeModal('project')">✕</button>
+    <input type="hidden" id="m-proj-id">
+    <div style="display:grid;grid-template-columns:60px 1fr;gap:12px;">
+      <div class="admin-field"><label class="admin-label">Icon</label><input class="admin-input" id="m-proj-icon" placeholder="🚀" style="text-align:center;font-size:1.2rem;"></div>
+      <div class="admin-field"><label class="admin-label">Project Title</label><input class="admin-input" id="m-proj-title" placeholder="My Awesome Project"></div>
+    </div>
+    <div class="admin-field"><label class="admin-label">Description</label><textarea class="admin-input" id="m-proj-desc" rows="3" placeholder="What does this project do?"></textarea></div>
+    <div class="admin-field"><label class="admin-label">Technologies (comma separated)</label><input class="admin-input" id="m-proj-tech" placeholder="Python, Scikit-learn, Flask"></div>
+    <div class="admin-field"><label class="admin-label">GitHub Link</label><input class="admin-input" id="m-proj-github" placeholder="https://github.com/..."></div>
+    <div class="admin-field"><label class="admin-label">Live Demo Link (optional)</label><input class="admin-input" id="m-proj-demo" placeholder="https://..."></div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('project')">Cancel</button>
+      <button class="btn-modal-save"   onclick="saveProject()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPERIENCE MODAL -->
+<div class="modal-overlay" id="modal-exp">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-exp-title">Add Experience</div>
+    <button class="modal-close" onclick="closeModal('exp')">✕</button>
+    <input type="hidden" id="m-exp-id">
+    <div class="admin-field"><label class="admin-label">Job Title / Role</label><input class="admin-input" id="m-exp-role" placeholder="Data Science Intern"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="admin-field"><label class="admin-label">Company</label><input class="admin-input" id="m-exp-company" placeholder="Techciti"></div>
+      <div class="admin-field"><label class="admin-label">Location</label><input class="admin-input" id="m-exp-location" placeholder="Bangalore"></div>
+    </div>
+    <div class="admin-field"><label class="admin-label">Duration</label><input class="admin-input" id="m-exp-duration" placeholder="March 2025 – April 2025"></div>
+    <div class="admin-field"><label class="admin-label">Key Points (one per line)</label><textarea class="admin-input" id="m-exp-points" rows="5" placeholder="Developed ML model for fraud detection&#10;Achieved 95% accuracy on test data&#10;..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('exp')">Cancel</button>
+      <button class="btn-modal-save"   onclick="saveExp()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDUCATION MODAL -->
+<div class="modal-overlay" id="modal-edu">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-edu-title">Add Education</div>
+    <button class="modal-close" onclick="closeModal('edu')">✕</button>
+    <input type="hidden" id="m-edu-id">
+    <div style="display:grid;grid-template-columns:60px 1fr;gap:12px;">
+      <div class="admin-field"><label class="admin-label">Icon</label><input class="admin-input" id="m-edu-icon" placeholder="🎓" style="text-align:center;font-size:1.2rem;"></div>
+      <div class="admin-field"><label class="admin-label">Degree / Course Name</label><input class="admin-input" id="m-edu-degree" placeholder="Bachelor of Computer Applications"></div>
+    </div>
+    <div class="admin-field"><label class="admin-label">Institution</label><input class="admin-input" id="m-edu-school" placeholder="Bangalore University"></div>
+    <div class="admin-field"><label class="admin-label">Year / Duration</label><input class="admin-input" id="m-edu-year" placeholder="Sep 2022 – 2025"></div>
+    <div class="modal-footer">
+      <button class="btn-modal-cancel" onclick="closeModal('edu')">Cancel</button>
+      <button class="btn-modal-save"   onclick="saveEdu()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     NAVBAR
+============================================================ -->
+<nav id="main-nav">
+  <span class="nav-logo">SK</span>
+  <a href="#home">Home</a>
+  <a href="#about">About</a>
+  <a href="#skills">Skills</a>
+  <a href="#projects">Projects</a>
+  <a href="#experience">Exp</a>
+  <a href="#resume">Resume</a>
+  <a href="#contact">Contact</a>
+  <a class="nav-admin-btn" onclick="openAdmin()">⚙ Admin</a>
+</nav>
+
+<!-- ============================================================
+     HERO SECTION
+============================================================ -->
+<section id="home">
+  <div class="hero-left">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      <span id="hero-badge-text">Open to Data Science &amp; ML Roles &nbsp;|&nbsp; Immediate Joiner</span>
+    </div>
+    <p class="hero-greeting" id="hero-greeting-text">Hello, It's Me</p>
+    <h1 class="hero-name" id="hero-name-text">Thepalle Sudharshan Kumar</h1>
+    <div class="hero-title-wrapper">
+      <span id="typed-text"></span><span class="cursor-blink">|</span>
+    </div>
+    <p class="hero-desc" id="hero-desc-text">
+      A passionate Data Scientist &amp; ML Engineer specializing in predictive modeling,
+      fraud detection systems, and AI-powered applications.
+    </p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn-primary">⚡ Hire Me</a>
+      <a id="resume-download-btn" href="/static/assets/resume.pdf" download="Sudharshan_Kumar_Resume.pdf" class="btn-outline">📄 Download Resume</a>
+      <a href="#projects" class="btn-outline">🚀 View Projects</a>
+    </div>
+    <div class="social-links">
+      <a id="hero-linkedin-link" href="https://www.linkedin.com/in/thepalle-sudharshan-a19263351" target="_blank" class="social-link" title="LinkedIn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+      </a>
+      <a id="hero-github-link" href="https://github.com/sudharshan970" target="_blank" class="social-link" title="GitHub">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="profile-container">
+      <div class="profile-glow"></div>
+      <div class="profile-ring-outer"></div>
+      <div class="profile-ring-inner"></div>
+      <img id="main-profile-img" src="/static/assets/profile.jpg" alt="Thepalle Sudharshan Kumar" class="profile-img">
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ABOUT
+============================================================ -->
+<section id="about">
+  <div class="section-header reveal">
+    <span class="section-tag">// 01 — Who I Am</span>
+    <h2 class="section-title">About <span>Me</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="about-grid">
+    <div class="about-text reveal" id="about-text-display"></div>
+    <div class="about-stats reveal" id="about-stats-display"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SKILLS
+============================================================ -->
+<section id="skills">
+  <div class="section-header reveal">
+    <span class="section-tag">// 02 — What I Know</span>
+    <h2 class="section-title">Technical <span>Skills</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="skills-grid reveal" id="skills-display"></div>
+</section>
+
+<!-- ============================================================
+     PROJECTS
+============================================================ -->
+<section id="projects">
+  <div class="section-header reveal">
+    <span class="section-tag">// 03 — What I've Built</span>
+    <h2 class="section-title">Featured <span>Projects</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="projects-grid" id="projects-display"></div>
+</section>
+
+<!-- ============================================================
+     ML METRICS
+============================================================ -->
+<section id="metrics">
+  <div class="section-header reveal">
+    <span class="section-tag">// 04 — Model Performance</span>
+    <h2 class="section-title">ML <span>Metrics</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-card reveal">
+      <div class="metric-chart-container">
+        <canvas id="chart-accuracy" width="110" height="110"></canvas>
+        <div class="metric-value">95%</div>
+      </div>
+      <div class="metric-name">Accuracy</div>
+      <div class="metric-desc">Fraud Detection Model</div>
+    </div>
+    <div class="metric-card reveal">
+      <div class="metric-chart-container">
+        <canvas id="chart-precision" width="110" height="110"></canvas>
+        <div class="metric-value">93%</div>
+      </div>
+      <div class="metric-name">Precision</div>
+      <div class="metric-desc">Random Forest Classifier</div>
+    </div>
+    <div class="metric-card reveal">
+      <div class="metric-chart-container">
+        <canvas id="chart-recall" width="110" height="110"></canvas>
+        <div class="metric-value">92%</div>
+      </div>
+      <div class="metric-name">Recall</div>
+      <div class="metric-desc">Cross-validated Score</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     EXPERIENCE
+============================================================ -->
+<section id="experience">
+  <div class="section-header reveal">
+    <span class="section-tag">// 05 — Where I've Worked</span>
+    <h2 class="section-title">Work <span>Experience</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="timeline" id="experience-display"></div>
+</section>
+
+<!-- ============================================================
+     EDUCATION
+============================================================ -->
+<section id="education">
+  <div class="section-header reveal">
+    <span class="section-tag">// 06 — Where I Learned</span>
+    <h2 class="section-title">Education</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="edu-cards" id="education-display"></div>
+</section>
+
+<!-- ============================================================
+     RESUME
+============================================================ -->
+<section id="resume">
+  <div class="section-header reveal">
+    <span class="section-tag">// 07 — My Resume</span>
+    <h2 class="section-title">View <span>Resume</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="resume-wrapper reveal">
+    <div class="resume-viewer">
+      <div class="resume-viewer-header">
+        <div class="resume-viewer-title">
+          <div class="pdf-dot"></div>
+          Sudharshan_Kumar_Resume.pdf
+        </div>
+        <span style="color:var(--muted);font-size:.68rem;font-family:var(--font-mono);">DATA SCIENTIST & ML ENGINEER</span>
+      </div>
+      <iframe id="resume-iframe" src="/static/assets/resume.pdf" class="resume-embed" title="Resume"></iframe>
+    </div>
+    <div class="resume-actions">
+      <a id="resume-dl-btn" href="/static/assets/resume.pdf" download="Sudharshan_Kumar_Resume.pdf" class="btn-primary">⬇️ Download PDF</a>
+      <a href="#contact" class="btn-outline">📩 Contact Me</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CONTACT
+============================================================ -->
+<section id="contact">
+  <div class="section-header reveal">
+    <span class="section-tag">// 08 — Get In Touch</span>
+    <h2 class="section-title">Let's <span>Connect</span></h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-info reveal">
+      <h3 id="contact-heading-display">Ready to work together?</h3>
+      <p  id="contact-desc-display">I'm actively looking for Data Science and Machine Learning roles. Let's talk!</p>
+      <div class="contact-items" id="contact-items-display"></div>
+    </div>
+    <div class="contact-form reveal">
+
+      <!-- Email routing display: FROM → TO -->
+      <div style="background:rgba(13,17,23,0.8);border:1px solid rgba(0,212,255,0.18);border-radius:14px;padding:14px 18px;margin-bottom:22px;">
+        <div style="font-family:var(--font-mono);font-size:.58rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;">📨 Message Routing</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+
+          <!-- SENDER (dynamic — fills as user types) -->
+          <div style="flex:1;min-width:140px;">
+            <div style="font-family:var(--font-mono);font-size:.58rem;color:var(--muted);letter-spacing:.08em;margin-bottom:4px;">FROM</div>
+            <a id="cf-sender-display" href="#" onclick="return false;"
+               style="font-family:var(--font-mono);font-size:.75rem;color:var(--purple);word-break:break-all;text-decoration:none;transition:color .2s;display:block;"
+               title="Sender email (filled as you type)">your@email.com</a>
+          </div>
+
+          <!-- Arrow -->
+          <div style="color:var(--cyan);font-size:1.1rem;flex-shrink:0;">→</div>
+
+          <!-- RECIPIENT (Sudharshan's email) -->
+          <div style="flex:1;min-width:140px;">
+            <div style="font-family:var(--font-mono);font-size:.58rem;color:var(--muted);letter-spacing:.08em;margin-bottom:4px;">TO</div>
+            <a id="contact-form-dest" data-emailjs-dest
+               href="mailto:thepallisudharshan@gmail.com"
+               style="font-family:var(--font-mono);font-size:.75rem;color:var(--cyan);word-break:break-all;text-decoration:underline;"
+               title="Click to email Sudharshan directly">thepallisudharshan@gmail.com</a>
+          </div>
+
+          <!-- Live dot -->
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.5s infinite;flex-shrink:0;margin-left:auto;"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Name *</label>
+        <input type="text" class="form-input" id="cf-name" placeholder="John Doe" autocomplete="name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Email Address *</label>
+        <input type="email" class="form-input" id="cf-email" placeholder="john@company.com" autocomplete="email"
+               oninput="updateSenderDisplay(this.value)">
+        <div style="font-size:.7rem;color:var(--muted);margin-top:5px;font-family:var(--font-mono);">
+          💬 Sudharshan will reply directly to this address
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <input type="text" class="form-input" id="cf-subject" placeholder="e.g. Data Science Opportunity" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Message *</label>
+        <textarea class="form-input" rows="5" id="cf-msg" placeholder="Hi Sudharshan, I'd love to discuss a Data Science opportunity..."></textarea>
+      </div>
+
+      <button class="form-submit" onclick="handleContactSubmit(this)">⚡ Send Message</button>
+
+      <div style="text-align:center;margin-top:14px;font-family:var(--font-mono);font-size:.63rem;color:var(--muted);">
+        🔒 Powered by EmailJS · Your info is never stored
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+============================================================ -->
+<footer>
+  <p>Designed &amp; Built with ❤️ by
+    <span style="color:var(--cyan)" id="footer-name">Thepalle Sudharshan Kumar</span>
+    · Data Scientist &amp; ML Engineer
+  </p>
+  <p style="margin-top:7px;">© 2025 All Rights Reserved</p>
+</footer>
+
+<!-- ============================================================
+     SCRIPTS (load order matters)
+============================================================ -->
+
+<!-- EmailJS SDK — sends contact form directly to your Gmail (free, no backend) -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<!-- EmailJS config — fill in your keys in this file -->
+<script src="/static/src/js/emailjs.config.js"></script>
+
+<script src="/static/src/js/assets_inline.js"></script>
+<script src="/static/src/js/data.js"></script>
+<script src="/static/src/js/animations.js"></script>
+<script src="/static/src/js/render.js"></script>
+<script src="/static/src/js/admin.js"></script>
+<script>
+/* ---- BOOT ---- */
+document.addEventListener('DOMContentLoaded', () => {
+  // Use inline assets as fallback if localStorage has none
+  if (!STATE.profileImg) STATE.profileImg = window.ASSET_PROFILE;
+  if (!STATE.resumeSrc)  STATE.resumeSrc  = window.ASSET_RESUME;
+
+  initCursor();
+  initParticles();
+  initScrollReveal();
+  initMetricCharts();
+  initNavHighlight();
+  renderAll();
+  initTyping();
+
+  // Re-observe after render
+  setTimeout(() => {
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+  }, 200);
+});
+</script>
+
+</body>
+</html>

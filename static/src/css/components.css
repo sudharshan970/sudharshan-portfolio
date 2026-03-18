@@ -1,0 +1,227 @@
+/* ============================================================
+   SHARED COMPONENTS & UTILITIES
+============================================================ */
+
+/* ---- CURSOR ---- */
+#cursor {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  background: var(--cyan);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99999;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s, background 0.2s;
+  mix-blend-mode: screen;
+}
+#cursor-glow {
+  position: fixed;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 99998;
+  transform: translate(-50%, -50%);
+  transition: all 0.15s ease-out;
+}
+#cursor.hover {
+  width: 28px;
+  height: 28px;
+  background: rgba(0,212,255,0.3);
+  border: 2px solid var(--cyan);
+}
+
+/* ---- CANVAS ---- */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ---- SECTION COMMON ---- */
+section {
+  position: relative;
+  z-index: 1;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 70px;
+}
+
+.section-tag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--cyan);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.section-title span {
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.section-line {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(to right, var(--cyan), var(--purple));
+  margin: 16px auto 0;
+  border-radius: 2px;
+}
+
+/* ---- BUTTONS ---- */
+.btn-primary {
+  padding: 13px 28px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  color: #000;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  letter-spacing: 0.05em;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0,212,255,0.4);
+}
+
+.btn-outline {
+  padding: 13px 28px;
+  background: transparent;
+  color: var(--cyan);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  border: 1px solid rgba(0,212,255,0.4);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+  letter-spacing: 0.05em;
+}
+.btn-outline:hover {
+  background: rgba(0,212,255,0.08);
+  border-color: var(--cyan);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+/* ---- REVEAL ANIMATIONS ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---- TOAST ---- */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 300000;
+  background: var(--surface2);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: rgba(57,255,20,0.3); color: var(--green); }
+.toast.error   { border-color: rgba(255,45,120,0.3); color: var(--pink); }
+
+/* ---- ANIMATIONS ---- */
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideDown {
+  from { top: -20px; opacity: 0; }
+  to   { top: 20px;  opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.1); }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+@keyframes pulseBadge {
+  0%, 100% { box-shadow: 0 0 10px rgba(57,255,20,0.2); }
+  50%      { box-shadow: 0 0 25px rgba(57,255,20,0.5); }
+}
+
+/* ---- MOBILE BASE ---- */
+@media (max-width: 768px) {
+  .reveal { transition-duration: 0.5s; }
+}
+
+/* ---- SHAKE ANIMATION (contact form validation) ---- */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-5px); }
+  80%       { transform: translateX(5px); }
+}
+
+/* ---- CONTACT FORM SENDING STATE ---- */
+.form-submit:disabled {
+  cursor: not-allowed;
+}
+.form-submit.sending {
+  background: linear-gradient(135deg, rgba(0,212,255,0.5), rgba(191,90,242,0.5));
+}

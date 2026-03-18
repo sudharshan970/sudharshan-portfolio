@@ -1,0 +1,185 @@
+/* ============================================================
+   HERO SECTION STYLES
+============================================================ */
+
+#home {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 120px 6% 80px;
+  gap: 60px;
+}
+
+/* ---- LEFT CONTENT ---- */
+.hero-left {
+  flex: 1;
+  animation: fadeInLeft 1s ease 0.3s both;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(57, 255, 20, 0.08);
+  border: 1px solid rgba(57, 255, 20, 0.3);
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.05em;
+  margin-bottom: 22px;
+  animation: pulseBadge 2s infinite;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+.hero-greeting {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.hero-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  line-height: 1.05;
+  background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+
+.hero-title-wrapper {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--cyan);
+  margin-bottom: 22px;
+  height: 1.6em;
+  overflow: hidden;
+}
+
+.cursor-blink {
+  animation: blink 0.7s infinite;
+  color: var(--purple);
+}
+
+.hero-desc {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  max-width: 520px;
+  margin-bottom: 34px;
+}
+
+.hero-btns {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 36px;
+}
+
+.social-links {
+  display: flex;
+  gap: 14px;
+}
+
+.social-link {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.3s;
+  background: rgba(255, 255, 255, 0.02);
+}
+.social-link:hover {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-3px);
+}
+
+/* ---- RIGHT — PROFILE IMAGE ---- */
+.hero-right {
+  flex: 0 0 380px;
+  display: flex;
+  justify-content: center;
+  animation: fadeInRight 1s ease 0.3s both;
+}
+
+.profile-container {
+  position: relative;
+  width: 340px;
+  height: 340px;
+}
+
+.profile-ring-outer {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--cyan), var(--purple), var(--pink), var(--cyan));
+  animation: spin 4s linear infinite;
+  -webkit-mask: radial-gradient(circle, transparent 49%, black 50%);
+  mask:         radial-gradient(circle, transparent 49%, black 50%);
+}
+
+.profile-ring-inner {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: conic-gradient(from 180deg, var(--purple), var(--cyan), var(--purple));
+  animation: spin 6s linear infinite reverse;
+  -webkit-mask: radial-gradient(circle, transparent 52%, black 53%);
+  mask:         radial-gradient(circle, transparent 52%, black 53%);
+  opacity: 0.6;
+}
+
+.profile-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+  border: 4px solid var(--bg);
+  position: relative;
+  z-index: 2;
+  animation: float 5s ease-in-out infinite;
+  box-shadow: 0 0 60px rgba(0,212,255,0.3),
+              0 0 100px rgba(191,90,242,0.15);
+}
+
+.profile-glow {
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(circle, rgba(0,212,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glowPulse 3s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* ---- MOBILE ---- */
+@media (max-width: 768px) {
+  #home {
+    flex-direction: column-reverse;
+    padding: 130px 5% 70px;
+    text-align: center;
+    gap: 36px;
+  }
+  .hero-right { flex: none; width: 240px; height: 240px; }
+  .profile-container { width: 240px; height: 240px; }
+  .hero-btns, .social-links { justify-content: center; }
+  .hero-desc { margin: 0 auto 34px; }
+}
