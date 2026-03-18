@@ -1,28 +1,35 @@
 """
 ============================================================
-  main.py  —  Sudharshan Portfolio — FastAPI Backend
-  Admin panel changes → SQLite DB → live for everyone!
+  main.py  —  Sudharshan Portfolio — FastAPI + JSONBin
+  Admin panel changes → JSONBin (free) → live for everyone!
 ============================================================
 """
-
+ 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Any, Optional
-import sqlite3, json, os
-
+from typing import Any
+import json, httpx
+ 
+# ── JSONBin Config ─────────────────────────────────────────
+JSONBIN_BIN_ID  = "69bac4fdc3097a1dd5383e29"
+JSONBIN_API_KEY = "$2a$10$JVPZ1sNJK39HMa0plfrIPu3U/NOgi7fQtm8UUA6fr1Wr0wtvjmWEC"
+JSONBIN_URL     = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}"
+JSONBIN_HEADERS = {
+    "Content-Type": "application/json",
+    "X-Master-Key": JSONBIN_API_KEY,
+    "X-Bin-Versioning": "false"
+}
+ 
 # ── App setup ──────────────────────────────────────────────
 app = FastAPI(title="Sudharshan Portfolio")
-
-app.mount("/static",  StaticFiles(directory="static"),  name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
-DB_PATH = "portfolio.db"
-
-# ── Default data (same as your original data.js) ───────────
+ 
+# ── Default data ───────────────────────────────────────────
 DEFAULTS = {
     "hero": {
         "name":     "Thepalle Sudharshan Kumar",
@@ -58,10 +65,10 @@ DEFAULTS = {
          "desc":"ML-powered financial fraud detection using Logistic Regression & Random Forest. Achieved high accuracy with feature engineering and EDA-driven insights.",
          "tech":"Python,Scikit-learn,Pandas,Seaborn","github":"https://github.com/sudharshan970","demo":""},
         {"id":2,"icon":"🏛️","title":"Crime Record Management System",
-         "desc":"Web-based CRMS using Python & Flask to help law enforcement maintain secure, centralized digital records — replacing paper-based systems entirely.",
+         "desc":"Web-based CRMS using Python & Flask to help law enforcement maintain secure, centralized digital records.",
          "tech":"Python,Flask,MySQL,HTML/CSS","github":"https://github.com/sudharshan970","demo":""},
         {"id":3,"icon":"🎙️","title":"Storytelling Audio Generative AI",
-         "desc":"AI application generating immersive audio stories from text using NLG and TTS technologies with voice selection, background music, and theme customization.",
+         "desc":"AI application generating immersive audio stories from text using NLG and TTS technologies.",
          "tech":"Python,NLG,TTS,Generative AI","github":"https://github.com/sudharshan970","demo":""}
     ],
     "experience": [
@@ -86,91 +93,84 @@ DEFAULTS = {
     "adminCreds":    {"email":"thepallisudharshan@gmail.com","password":"Sudharshan@970"},
     "emailjsConfig": {"serviceId":"","templateId":"","publicKey":"","recipientEmail":"thepallisudharshan@gmail.com"}
 }
-
+ 
 ALL_KEYS = ["hero","about","skills","projects","experience","education",
             "contactInfo","profileImg","resumeSrc","nextId","adminCreds","emailjsConfig"]
-
-# ── Database setup ─────────────────────────────────────────
-def get_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-def init_db():
-    conn = get_db()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS portfolio (
-            key   TEXT PRIMARY KEY,
-            value TEXT NOT NULL
-        )
-    """)
-    # Seed defaults if empty
-    for k in ALL_KEYS:
-        existing = conn.execute("SELECT key FROM portfolio WHERE key=?", (k,)).fetchone()
-        if not existing:
-            conn.execute("INSERT INTO portfolio (key,value) VALUES (?,?)",
-                         (k, json.dumps(DEFAULTS.get(k))))
-    conn.commit()
-    conn.close()
-
-init_db()
-
-# ── Helpers ────────────────────────────────────────────────
-def db_get(key: str):
-    conn = get_db()
-    row = conn.execute("SELECT value FROM portfolio WHERE key=?", (key,)).fetchone()
-    conn.close()
-    return json.loads(row["value"]) if row else DEFAULTS.get(key)
-
-def db_set(key: str, value: Any):
-    conn = get_db()
-    conn.execute("INSERT OR REPLACE INTO portfolio (key,value) VALUES (?,?)",
-                 (key, json.dumps(value)))
-    conn.commit()
-    conn.close()
-
-def get_all_state():
-    return {k: db_get(k) for k in ALL_KEYS}
-
+ 
+# ── In-memory cache (fast reads) ───────────────────────────
+_cache: dict = {}
+ 
+# ── JSONBin Helpers ────────────────────────────────────────
+async def jsonbin_load() -> dict:
+    async with httpx.AsyncClient() as client:
+        res  = await client.get(JSONBIN_URL + "/latest", headers=JSONBIN_HEADERS, timeout=10)
+        data = res.json().get("record", {})
+        return data
+ 
+async def jsonbin_save(data: dict):
+    async with httpx.AsyncClient() as client:
+        await client.put(JSONBIN_URL, headers=JSONBIN_HEADERS,
+                         content=json.dumps(data), timeout=10)
+ 
+# ── Startup ────────────────────────────────────────────────
+@app.on_event("startup")
+async def startup():
+    global _cache
+    try:
+        data = await jsonbin_load()
+        if not data or (len(data) == 1 and "initialized" in data):
+            _cache = {k: DEFAULTS.get(k) for k in ALL_KEYS}
+            await jsonbin_save(_cache)
+            print("First run — defaults saved to JSONBin!")
+        else:
+            _cache = {k: data.get(k, DEFAULTS.get(k)) for k in ALL_KEYS}
+            print("Portfolio data loaded from JSONBin")
+    except Exception as e:
+        print(f"JSONBin unavailable, using defaults: {e}")
+        _cache = {k: DEFAULTS.get(k) for k in ALL_KEYS}
+ 
 # ── Routes ─────────────────────────────────────────────────
-
 @app.get("/")
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
-
-# Get all portfolio state (called by frontend on load)
+ 
 @app.get("/api/state")
 async def get_state():
-    return JSONResponse(get_all_state())
-
-# Save any single key
+    return JSONResponse(_cache)
+ 
 class SavePayload(BaseModel):
     key: str
     value: Any
-
+ 
 @app.post("/api/save")
 async def save_key(payload: SavePayload):
     if payload.key not in ALL_KEYS:
         raise HTTPException(status_code=400, detail="Invalid key")
-    db_set(payload.key, payload.value)
+    _cache[payload.key] = payload.value
+    try:
+        await jsonbin_save(_cache)
+    except Exception as e:
+        print(f"JSONBin save error: {e}")
     return {"ok": True, "key": payload.key}
-
-# Get next ID
+ 
 @app.get("/api/next-id")
 async def next_id():
-    current = db_get("nextId") or 200
+    current = _cache.get("nextId") or 200
     new_id  = current + 1
-    db_set("nextId", new_id)
+    _cache["nextId"] = new_id
+    try:
+        await jsonbin_save(_cache)
+    except Exception as e:
+        print(f"JSONBin save error: {e}")
     return {"id": new_id}
-
-# Reset all to defaults
+ 
 @app.post("/api/reset")
 async def reset_all():
-    for k in ALL_KEYS:
-        db_set(k, DEFAULTS.get(k))
+    global _cache
+    _cache = {k: DEFAULTS.get(k) for k in ALL_KEYS}
+    await jsonbin_save(_cache)
     return {"ok": True}
-
-# Health check (for Render.com)
+ 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
