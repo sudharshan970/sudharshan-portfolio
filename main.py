@@ -1,10 +1,10 @@
 """
 ============================================================
-  main.py  —  Sudharshan Portfolio — FastAPI + JSONBin
-  Every change saves to JSONBin immediately and permanently!
+  main.py  —  Sudharshan Portfolio — FastAPI + Supabase
+  100% permanent storage — changes never lost!
 ============================================================
 """
- 
+
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -12,23 +12,26 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Any
-import json, httpx, asyncio
- 
-# ── JSONBin Config ─────────────────────────────────────────
-JSONBIN_BIN_ID  = "69bac4fdc3097a1dd5383e29"
-JSONBIN_API_KEY = "$2a$10$JVPZ1sNJK39HMa0plfrIPu3U/NOgi7fQtm8UUA6fr1Wr0wtvjmWEC"
-JSONBIN_URL     = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}"
-JSONBIN_HEADERS = {
-    "Content-Type": "application/json",
-    "X-Master-Key": JSONBIN_API_KEY,
-    "X-Bin-Versioning": "false"
-}
- 
+import json, httpx, os
+
+# ── Supabase Config ────────────────────────────────────────
+SUPABASE_URL     = "https://rcyzrpdpdsxuinqmahbb.supabase.co"
+SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjeXpycGRwZHN4dWlucW1haGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzYwMjgsImV4cCI6MjA4OTUxMjAyOH0.zYlgcjpepwbp2JWMF0x3orfsEeswUQjtViH9LkXg4YA"
+TABLE_NAME       = "portfolio"
+
+def supa_headers():
+    return {
+        "apikey": SUPABASE_API_KEY,
+        "Authorization": f"Bearer {SUPABASE_API_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=representation"
+    }
+
 # ── App setup ──────────────────────────────────────────────
 app = FastAPI(title="Sudharshan Portfolio")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
- 
+
 # ── Default data ───────────────────────────────────────────
 DEFAULTS = {
     "hero": {
@@ -93,120 +96,91 @@ DEFAULTS = {
     "adminCreds":    {"email":"thepallisudharshan@gmail.com","password":"Sudharshan@970"},
     "emailjsConfig": {"serviceId":"","templateId":"","publicKey":"","recipientEmail":"thepallisudharshan@gmail.com"}
 }
- 
+
 ALL_KEYS = ["hero","about","skills","projects","experience","education",
             "contactInfo","profileImg","resumeSrc","nextId","adminCreds","emailjsConfig"]
- 
-# ── In-memory cache ────────────────────────────────────────
-_cache: dict = {}
- 
-# ── JSONBin: Load all data ─────────────────────────────────
-async def jsonbin_load() -> dict:
+
+# ── Supabase Helpers ───────────────────────────────────────
+async def db_load() -> dict:
     try:
+        url = f"{SUPABASE_URL}/rest/v1/{TABLE_NAME}?select=key,value"
         async with httpx.AsyncClient(timeout=15) as client:
-            res = await client.get(JSONBIN_URL + "/latest", headers=JSONBIN_HEADERS)
+            res = await client.get(url, headers=supa_headers())
             if res.status_code == 200:
-                return res.json().get("record", {})
+                rows = res.json()
+                return {row["key"]: json.loads(row["value"]) for row in rows}
+            else:
+                print(f"Supabase load error: {res.status_code} {res.text}")
     except Exception as e:
-        print(f"JSONBin load error: {e}")
+        print(f"Supabase load error: {e}")
     return {}
- 
-# ── JSONBin: Save all data (retries 3 times) ───────────────
-async def jsonbin_save(data: dict) -> bool:
-    for attempt in range(3):
-        try:
-            async with httpx.AsyncClient(timeout=15) as client:
-                res = await client.put(
-                    JSONBIN_URL,
-                    headers=JSONBIN_HEADERS,
-                    content=json.dumps(data)
-                )
-                if res.status_code == 200:
-                    print(f"✅ Saved to JSONBin successfully")
-                    return True
-                else:
-                    print(f"JSONBin save attempt {attempt+1} failed: {res.status_code}")
-        except Exception as e:
-            print(f"JSONBin save attempt {attempt+1} error: {e}")
-        await asyncio.sleep(1)
-    print("❌ All JSONBin save attempts failed")
+
+async def db_save(key: str, value: Any) -> bool:
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/{TABLE_NAME}"
+        payload = {"key": key, "value": json.dumps(value)}
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.post(url, headers=supa_headers(), json=payload)
+            if res.status_code in (200, 201):
+                print(f"✅ Saved '{key}' to Supabase")
+                return True
+            else:
+                print(f"Supabase save error {res.status_code}: {res.text}")
+    except Exception as e:
+        print(f"Supabase save error: {e}")
     return False
- 
-# ── Startup: always load fresh from JSONBin ────────────────
+
+# ── Startup ────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup():
-    global _cache
-    print("🚀 Starting up — loading from JSONBin...")
-    data = await jsonbin_load()
- 
-    if not data or (len(data) <= 1 and "initialized" in data):
-        # First ever run — save all defaults
-        _cache = {k: DEFAULTS.get(k) for k in ALL_KEYS}
-        await jsonbin_save(_cache)
-        print("🎉 First run — defaults saved to JSONBin!")
-    else:
-        # Load saved data, fill missing keys with defaults
-        _cache = {}
+    print("🚀 Loading from Supabase...")
+    data = await db_load()
+    if not data:
+        print("🌱 First run — seeding defaults...")
         for k in ALL_KEYS:
-            _cache[k] = data.get(k) if data.get(k) is not None else DEFAULTS.get(k)
-        print("✅ All data loaded from JSONBin!")
- 
+            await db_save(k, DEFAULTS.get(k))
+        print("✅ Defaults seeded to Supabase!")
+    else:
+        print(f"✅ Loaded {len(data)} keys from Supabase")
+
 # ── Routes ─────────────────────────────────────────────────
 @app.get("/")
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
- 
-# Frontend loads all state on page open
+
 @app.get("/api/state")
 async def get_state():
-    # Always reload from JSONBin on page load (so wakeup shows latest data)
-    fresh = await jsonbin_load()
-    if fresh and len(fresh) > 1:
-        for k in ALL_KEYS:
-            if fresh.get(k) is not None:
-                _cache[k] = fresh[k]
-    return JSONResponse(_cache)
- 
-# Save a single key
+    data  = await db_load()
+    state = {k: data.get(k) if data.get(k) is not None else DEFAULTS.get(k) for k in ALL_KEYS}
+    return JSONResponse(state)
+
 class SavePayload(BaseModel):
     key: str
     value: Any
- 
+
 @app.post("/api/save")
 async def save_key(payload: SavePayload):
     if payload.key not in ALL_KEYS:
         raise HTTPException(status_code=400, detail="Invalid key")
- 
-    # Update cache
-    _cache[payload.key] = payload.value
- 
-    # Save entire cache to JSONBin with retry
-    success = await jsonbin_save(_cache)
- 
+    success = await db_save(payload.key, payload.value)
     if not success:
-        raise HTTPException(status_code=500, detail="Failed to save to database")
- 
-    return {"ok": True, "key": payload.key, "saved": True}
- 
-# Get next unique ID
+        raise HTTPException(status_code=500, detail="Failed to save")
+    return {"ok": True, "key": payload.key}
+
 @app.get("/api/next-id")
 async def next_id():
-    current = _cache.get("nextId") or 200
+    data    = await db_load()
+    current = data.get("nextId") or 200
     new_id  = current + 1
-    _cache["nextId"] = new_id
-    await jsonbin_save(_cache)
+    await db_save("nextId", new_id)
     return {"id": new_id}
- 
-# Reset all to defaults
+
 @app.post("/api/reset")
 async def reset_all():
-    global _cache
-    _cache = {k: DEFAULTS.get(k) for k in ALL_KEYS}
-    await jsonbin_save(_cache)
+    for k in ALL_KEYS:
+        await db_save(k, DEFAULTS.get(k))
     return {"ok": True}
- 
-# Health check
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "cache_keys": list(_cache.keys())}
- 
+    return {"status": "ok"}
