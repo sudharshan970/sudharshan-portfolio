@@ -1,7 +1,7 @@
 """
 ============================================================
   main.py  —  Sudharshan Portfolio — FastAPI + JSONBin
-  Admin panel changes → JSONBin (free) → live for everyone!
+  Every change saves to JSONBin immediately and permanently!
 ============================================================
 """
  
@@ -12,7 +12,7 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Any
-import json, httpx
+import json, httpx, asyncio
  
 # ── JSONBin Config ─────────────────────────────────────────
 JSONBIN_BIN_ID  = "69bac4fdc3097a1dd5383e29"
@@ -97,47 +97,77 @@ DEFAULTS = {
 ALL_KEYS = ["hero","about","skills","projects","experience","education",
             "contactInfo","profileImg","resumeSrc","nextId","adminCreds","emailjsConfig"]
  
-# ── In-memory cache (fast reads) ───────────────────────────
+# ── In-memory cache ────────────────────────────────────────
 _cache: dict = {}
  
-# ── JSONBin Helpers ────────────────────────────────────────
+# ── JSONBin: Load all data ─────────────────────────────────
 async def jsonbin_load() -> dict:
-    async with httpx.AsyncClient() as client:
-        res  = await client.get(JSONBIN_URL + "/latest", headers=JSONBIN_HEADERS, timeout=10)
-        data = res.json().get("record", {})
-        return data
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            res = await client.get(JSONBIN_URL + "/latest", headers=JSONBIN_HEADERS)
+            if res.status_code == 200:
+                return res.json().get("record", {})
+    except Exception as e:
+        print(f"JSONBin load error: {e}")
+    return {}
  
-async def jsonbin_save(data: dict):
-    async with httpx.AsyncClient() as client:
-        await client.put(JSONBIN_URL, headers=JSONBIN_HEADERS,
-                         content=json.dumps(data), timeout=10)
+# ── JSONBin: Save all data (retries 3 times) ───────────────
+async def jsonbin_save(data: dict) -> bool:
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                res = await client.put(
+                    JSONBIN_URL,
+                    headers=JSONBIN_HEADERS,
+                    content=json.dumps(data)
+                )
+                if res.status_code == 200:
+                    print(f"✅ Saved to JSONBin successfully")
+                    return True
+                else:
+                    print(f"JSONBin save attempt {attempt+1} failed: {res.status_code}")
+        except Exception as e:
+            print(f"JSONBin save attempt {attempt+1} error: {e}")
+        await asyncio.sleep(1)
+    print("❌ All JSONBin save attempts failed")
+    return False
  
-# ── Startup ────────────────────────────────────────────────
+# ── Startup: always load fresh from JSONBin ────────────────
 @app.on_event("startup")
 async def startup():
     global _cache
-    try:
-        data = await jsonbin_load()
-        if not data or (len(data) == 1 and "initialized" in data):
-            _cache = {k: DEFAULTS.get(k) for k in ALL_KEYS}
-            await jsonbin_save(_cache)
-            print("First run — defaults saved to JSONBin!")
-        else:
-            _cache = {k: data.get(k, DEFAULTS.get(k)) for k in ALL_KEYS}
-            print("Portfolio data loaded from JSONBin")
-    except Exception as e:
-        print(f"JSONBin unavailable, using defaults: {e}")
+    print("🚀 Starting up — loading from JSONBin...")
+    data = await jsonbin_load()
+ 
+    if not data or (len(data) <= 1 and "initialized" in data):
+        # First ever run — save all defaults
         _cache = {k: DEFAULTS.get(k) for k in ALL_KEYS}
+        await jsonbin_save(_cache)
+        print("🎉 First run — defaults saved to JSONBin!")
+    else:
+        # Load saved data, fill missing keys with defaults
+        _cache = {}
+        for k in ALL_KEYS:
+            _cache[k] = data.get(k) if data.get(k) is not None else DEFAULTS.get(k)
+        print("✅ All data loaded from JSONBin!")
  
 # ── Routes ─────────────────────────────────────────────────
 @app.get("/")
 async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
  
+# Frontend loads all state on page open
 @app.get("/api/state")
 async def get_state():
+    # Always reload from JSONBin on page load (so wakeup shows latest data)
+    fresh = await jsonbin_load()
+    if fresh and len(fresh) > 1:
+        for k in ALL_KEYS:
+            if fresh.get(k) is not None:
+                _cache[k] = fresh[k]
     return JSONResponse(_cache)
  
+# Save a single key
 class SavePayload(BaseModel):
     key: str
     value: Any
@@ -146,24 +176,28 @@ class SavePayload(BaseModel):
 async def save_key(payload: SavePayload):
     if payload.key not in ALL_KEYS:
         raise HTTPException(status_code=400, detail="Invalid key")
-    _cache[payload.key] = payload.value
-    try:
-        await jsonbin_save(_cache)
-    except Exception as e:
-        print(f"JSONBin save error: {e}")
-    return {"ok": True, "key": payload.key}
  
+    # Update cache
+    _cache[payload.key] = payload.value
+ 
+    # Save entire cache to JSONBin with retry
+    success = await jsonbin_save(_cache)
+ 
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save to database")
+ 
+    return {"ok": True, "key": payload.key, "saved": True}
+ 
+# Get next unique ID
 @app.get("/api/next-id")
 async def next_id():
     current = _cache.get("nextId") or 200
     new_id  = current + 1
     _cache["nextId"] = new_id
-    try:
-        await jsonbin_save(_cache)
-    except Exception as e:
-        print(f"JSONBin save error: {e}")
+    await jsonbin_save(_cache)
     return {"id": new_id}
  
+# Reset all to defaults
 @app.post("/api/reset")
 async def reset_all():
     global _cache
@@ -171,6 +205,8 @@ async def reset_all():
     await jsonbin_save(_cache)
     return {"ok": True}
  
+# Health check
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {"status": "ok", "cache_keys": list(_cache.keys())}
+ 
