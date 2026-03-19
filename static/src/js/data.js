@@ -1,11 +1,8 @@
 /* ============================================================
-   data.js  —  Talks to FastAPI backend (SQLite database)
-   Admin panel changes → Python API → DB → live for everyone!
+   data.js  —  Talks to FastAPI + Supabase backend
+   Always loads fresh data — changes are permanent!
 ============================================================ */
 
-/* ============================================================
-   DEFAULT DATA (used as fallback while API loads)
-============================================================ */
 const DEFAULTS = {
   hero: {
     name:     "Thepalle Sudharshan Kumar",
@@ -65,9 +62,7 @@ const DEFAULTS = {
   }
 };
 
-/* ============================================================
-   STATE — starts with defaults, API overwrites on load
-============================================================ */
+/* ── STATE ── */
 const STATE = {
   hero:          { ...DEFAULTS.hero },
   about:         { ...DEFAULTS.about },
@@ -83,44 +78,47 @@ const STATE = {
   emailjsConfig: { serviceId:'', templateId:'', publicKey:'', recipientEmail:'thepallisudharshan@gmail.com' }
 };
 
-/* ============================================================
-   Load state from FastAPI backend
-============================================================ */
+/* ── Load FRESH from API — no cache, always latest ── */
 async function loadFromAPI() {
   try {
-    const res  = await fetch('/api/state');
+    // Add timestamp to prevent browser caching
+    const res  = await fetch('/api/state?t=' + Date.now());
     const data = await res.json();
     const keys = ['hero','about','skills','projects','experience','education',
                   'contactInfo','profileImg','resumeSrc','nextId','adminCreds','emailjsConfig'];
     keys.forEach(k => {
       if (data[k] !== undefined && data[k] !== null) STATE[k] = data[k];
     });
-    console.log('✅ State loaded from Python backend');
+    console.log('✅ Fresh data loaded from Supabase');
   } catch(e) {
     console.warn('⚠️ Could not reach API, using defaults:', e);
   }
+  // Only render AFTER fresh data is loaded
   if (typeof renderAll === 'function') renderAll();
+  if (typeof initTyping === 'function') initTyping();
 }
 
-/* ============================================================
-   lsSave — saves to FastAPI backend (SQLite)
-============================================================ */
+/* ── Save to Supabase via API ── */
 async function lsSave(key, val) {
   STATE[key] = val;
   try {
-    await fetch('/api/save', {
+    const res = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, value: val })
     });
+    const result = await res.json();
+    if (result.ok) {
+      console.log(`✅ '${key}' saved permanently to Supabase`);
+    } else {
+      console.warn(`❌ Save failed for '${key}'`);
+    }
   } catch(e) {
     console.warn('API save error:', e);
   }
 }
 
-/* ============================================================
-   getNextId — gets next ID from backend
-============================================================ */
+/* ── Get next ID from backend ── */
 async function getNextId() {
   try {
     const res  = await fetch('/api/next-id');
@@ -133,9 +131,7 @@ async function getNextId() {
   }
 }
 
-/* ============================================================
-   resetAllData — resets everything to defaults
-============================================================ */
+/* ── Reset all data ── */
 async function resetAllData() {
   if (!confirm('Reset ALL portfolio data to defaults? This cannot be undone.')) return;
   try {
@@ -144,5 +140,5 @@ async function resetAllData() {
   location.reload();
 }
 
-/* ---- Start loading from API ---- */
+/* ── Start — load fresh data first, then render ── */
 loadFromAPI();
